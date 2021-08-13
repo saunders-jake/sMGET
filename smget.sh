@@ -2,7 +2,7 @@
 
 ip=$1
 username=$2
-#Passwords containing a % might present issues
+#Passwords containing a %!* need to be escaped
 password=$3
 #Set to SMB/Samba port number
 port=445
@@ -47,7 +47,7 @@ printhelp () {
 printMessage () {
   #echo  "===================================================================================="
   echo -e "\033[1;35m"$1"\033[0m"
-  #echo "===================================================================================="
+  #echo "====================================================================================="
 }
 
 nullAuth () {
@@ -62,7 +62,7 @@ nullAuth () {
 
   #Find readable shares
   printMessage "Finding readable shares on $ip"
-  readableShares=$(smbmap -H "$ip" -P $port | grep READ | awk '{print $1}')
+  readableShares=$(smbmap -H "$ip" -P $port -u anonymous | grep READ | awk '{print $1}')
   echo "$readableShares"
 
   #Loop over the shares and download the files
@@ -73,14 +73,29 @@ nullAuth () {
 
     #Check amount of files on current share
     printMessage "Counting number of files on \\\\\\$ip\\\\$share (This can take a while)"
-    totalFiles=$(smbclient \\\\"$ip"\\"$share" -p $port -c 'lcd '$folderPath/$share';recurse;prompt;ls' -N | awk '{if ( NF == 8 && $(NF-6) != "D" ) { print }}' | wc -l)
+    totalFiles=$(smbclient \\\\"$ip"\\"$share" -p $port -U "anonymous%' '" -c 'lcd '$folderPath/$share';recurse;prompt;ls' | awk '{if ( NF == 8 && $(NF-6) != "D" ) { print }}' | wc -l)
 
-    if [ $totalFiles -ge $fileLimit ]; then echo -e "This share has ~$totalFiles files. Proceed to download? [y/n] \c"; read download; fi
-    if [ "$download" = "n" ] || [ "$download" = "N" ]; then printMessage "Skipping download"; continue; fi
+    if [ $totalFiles -ge $fileLimit ]
+    then
+      download=" "
+      #Asks the user if they wish to download files from a share
+      while [ "$download" != "N" ] && [ "$download" != "n" ] && [ "$download" != "y" ] && [ "$download" != "Y" ]
+      do
+        echo -e "This share has ~$totalFiles files. Proceed to download? [y/n] \c"
+        read download
+      done
+    fi
+
+    if [ "$download" = "n" ] || [ "$download" = "N" ]
+    then
+      printMessage "Skipping download";
+      continue
+    fi
 
     #Download the files
     printMessage "Downloading..."
-    smbclient \\\\"$ip"\\"$share" -p $port -c 'lcd '$folderPath/$share';recurse;prompt;mget *' -N
+    smbclient \\\\"$ip"\\"$share" -p $port -U "anonymous%' '" -c 'lcd '$folderPath/$share';recurse;prompt;mget *'
+
   done
 
   printMessage "Script finished successfully"
@@ -98,7 +113,7 @@ credAuth () {
 
   #Find readable shares
   printMessage "Finding readable shares on $ip"
-  readableShares=$(smbmap -H "$ip" -P $port -u "$username" -p "$password" | grep READ | awk '{print $1}')
+  readableShares=$(smbmap -H "$ip" -P $port -u "$username" -p "\"$password\"" | grep READ | awk '{print $1}')
   echo "$readableShares"
 
   #Loop over the shares and download the files
@@ -109,14 +124,28 @@ credAuth () {
 
     #Check amount of files on current share
     printMessage "Counting number of files on \\\\\\$ip\\\\$share (This can take a while)"
-    totalFiles=$(smbclient \\\\"$ip"\\"$share" -p $port -U "$username%$password" -c 'lcd '$folderPath/$share';recurse;prompt;ls' | awk '{if ( NF == 8 && $(NF-6) != "D" ) { print }}' | wc -l)
+    totalFiles=$(smbclient \\\\"$ip"\\"$share" -p $port -U "$username%\"$password\"" -c 'lcd '$folderPath/$share';recurse;prompt;ls' | awk '{if ( NF == 8 && $(NF-6) != "D" ) { print }}' | wc -l)
 
-    if [ $totalFiles -ge $fileLimit ]; then echo -e "This share has ~$totalFiles files. Proceed to download? [y/n] \c"; read download; fi
-    if [ "$download" = "n" ] || [ "$download" = "N" ]; then printMessage "Skipping download"; continue; fi
+    if [ $totalFiles -ge $fileLimit ]
+    then
+      download=" "
+      #Asks the user if they wish to download files from a share
+      while [ "$download" != "N" ] && [ "$download" != "n" ] && [ "$download" != "y" ] && [ "$download" != "Y" ]
+      do
+        echo -e "This share has ~$totalFiles files. Proceed to download? [y/n] \c"
+        read download
+      done
+    fi
+
+    if [ "$download" = "n" ] || [ "$download" = "N" ]
+    then
+      printMessage "Skipping download";
+      continue
+    fi
 
     #Download the files
     printMessage "Downloading..."
-    smbclient \\\\"$ip"\\"$share" -p $port -U "$username%$password" -c 'lcd '$folderPath/$share';recurse;prompt;mget *'
+    smbclient \\\\"$ip"\\"$share" -p $port -U "$username%\"$password\"" -c 'lcd '$folderPath/$share';recurse;prompt;mget *'
   done
 
   printMessage "Script finished successfully"
@@ -136,6 +165,3 @@ then
 else
   credAuth
 fi
-
-#File counting does not consider the files you can/cannot download due to permissions.
-#this script might work faster if you redirect its output to /dev/null
