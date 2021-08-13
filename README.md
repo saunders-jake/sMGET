@@ -5,7 +5,7 @@
  (__  )/ /  / // /_/ // /___   / /
 /____//_/  /_/ \____//_____/  /_/
 
-A smbclient/smbmap wrapper that recusively downloads files from readable SMB/Samba shares on a client
+A smbclient/smbmap wrapper that recusively downloads files from readable SMB/Samba shares
 ```
 ---
 ### Usage
