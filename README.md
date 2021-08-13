@@ -11,7 +11,7 @@ A smbclient/smbmap wrapper that recusively downloads files from readable SMB/Sam
 ### Usage
 This script has two different modes
 
-Null Authentication
+Anonymous(null) authentication
 ```
 ./smget 10.11.1.231
 ```
