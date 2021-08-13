@@ -122,6 +122,6 @@ smbclient \\\\"$ip"\\"$share" -p $port -c 'lcd '$folderPath/$share';recurse;prom
 
 ### Notes
 - Piping the output of the command to /dev/null might make the script run quicker (untested)
-- I put a ~ next to the amount of files being downloaded because this script doesn't account for files that cannot be downloaded (i.e lack of permissions)
+- I put a ~ next to the number of files being downloaded because this script doesn't account for files that cannot be downloaded (i.e lack of permissions)
 
 Pull requests are welcome :)
