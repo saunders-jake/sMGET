@@ -33,7 +33,10 @@ saveFolder="smbloot"
 #the program will give the user an option to skip downloading that share.
 fileLimit=5
 ```
-
+### Download
+```
+wget https://raw.githubusercontent.com/saunders-jake/sMGET/main/smget.sh -o smget; chmod +x smget 
+```
 ### Demo
 ```
 (Output will be colorized if terminal supports it)
